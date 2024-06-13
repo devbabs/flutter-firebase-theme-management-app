@@ -1,4 +1,4 @@
-package com.example.firebase_theme_take_home_project
+package com.example.app
 
 import io.flutter.embedding.android.FlutterActivity
 
