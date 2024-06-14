@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_theme_take_home_project/main.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -26,8 +25,6 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-
-    print("OKay now ${dotenv.env['FIREBASE_APP_ID']}");
 
     Timer.periodic(const Duration(seconds: 1), (timer) {
       dynamic newActiveSubscription;
@@ -58,7 +55,7 @@ class _HomeState extends State<Home> {
     });
 
     void subscribeWithDuration() {
-      var expiresAt = DateTime.now().add(const Duration(minutes: 2));
+      var expiresAt = DateTime.now().add(const Duration(minutes: 10));
 
       database.ref('subscription_expiry').set(expiresAt.millisecondsSinceEpoch);
     }
@@ -97,19 +94,19 @@ class _HomeState extends State<Home> {
                     color: Colors.green
                   ),),
                   Text("Expires at: ${DateFormat().format(DateTime.fromMillisecondsSinceEpoch(activeSubscription))}", style: Theme.of(context).textTheme.bodyLarge,),
-                  Text("Time now is: ${DateFormat().format(currentTime)}", style: Theme.of(context).textTheme.bodyLarge,),
                 ],
               ) : Column(
                 children: [
                   Text("Inactive", style: Theme.of(context).textTheme.displayLarge!.copyWith(
                     color: Colors.red
                   ),),
-                  ElevatedButton(
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.shield),
                     onPressed: () {
                       // Subscribe to use subscriber themes
                       subscribeWithDuration();
                     },
-                    child: Text("Subscribe Now", style: Theme.of(context).textTheme.bodyLarge,)
+                    label: Text("Click here to subscribe now", style: Theme.of(context).textTheme.bodyLarge,)
                   ),
                 ],
               ),
@@ -117,6 +114,7 @@ class _HomeState extends State<Home> {
             const SizedBox(height: 20,),
             ThemesList(title: "Default Themes:", themes: widget.defaultThemes),
             ThemesList(title: "Subscriber Themes:", themes: widget.subscriberThemes, requiresSubscription: true, activeSubscription: activeSubscription,),
+            const SizedBox(height: 100,),
           ],
         ),
       ),
@@ -206,7 +204,6 @@ class ThemeCard extends StatelessWidget {
           ),
         );
       }
-
     }
 
     return GestureDetector(
