@@ -6,8 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+// We use a stateful widget here so we can track a user's subscription status in the widget state
 class Home extends StatefulWidget {
-  const Home({super.key, required this.title, required this.defaultThemes, required this.subscriberThemes});
+  const Home({
+    super.key,
+    required this.title,
+    required this.defaultThemes,
+    required this.subscriberThemes
+  });
 
   final String title;
   final List defaultThemes;
@@ -18,6 +24,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  // Connecting to Firebase Realtime Database
   final FirebaseDatabase database = FirebaseDatabase.instance;
 
   dynamic activeSubscription;
@@ -25,7 +32,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-
+    // Interval timer to constantly update the current time and check for changes to the active subscription
     Timer.periodic(const Duration(seconds: 1), (timer) {
       dynamic newActiveSubscription;
 
@@ -42,24 +49,29 @@ class _HomeState extends State<Home> {
       });
     });
 
+    // Get and listen to changes in the subscription expiry time on the firebase realtime database
     database.ref('subscription_expiry').onValue.listen((DatabaseEvent event) {
       if (event.snapshot.exists && event.snapshot.value != activeSubscription) {
+        // Set active subscription in the widget state if the subscription expiry time is changed in the firebase realtime database
         setState(() {
           activeSubscription = event.snapshot.value;
         });
       } else if(!event.snapshot.exists) {
+        // Remove active subscription from the widget state if the subscription expiry time is removed from the firebase realtime database
         setState(() {
           activeSubscription = null;
         });
       }
     });
 
+    // Function to update subscription expiry time in the firebase realtime database, setting to 10 minutes
     void subscribeWithDuration() {
       var expiresAt = DateTime.now().add(const Duration(minutes: 10));
 
       database.ref('subscription_expiry').set(expiresAt.millisecondsSinceEpoch);
     }
 
+    // Main home page scaffold, with appbar, body and Snackbar for alerts
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title, style: Theme.of(context).textTheme.titleLarge!.copyWith(
@@ -122,8 +134,15 @@ class _HomeState extends State<Home> {
   }
 }
 
+// Widget to show a list of themes and a title
 class ThemesList extends StatelessWidget {
-  const ThemesList({super.key, required this.title, required this.themes, this.requiresSubscription = false, this.activeSubscription});
+  const ThemesList({
+    super.key,
+    required this.title,
+    required this.themes,
+    this.requiresSubscription = false,
+    this.activeSubscription
+  });
 
   final String title;
   final List themes;
@@ -161,6 +180,7 @@ class ThemesList extends StatelessWidget {
   }
 }
 
+// Widget to show a single theme card, with an action to apply the theme for that card
 class ThemeCard extends StatelessWidget {
   const ThemeCard({super.key, required this.theme, this.requiresSubscription = false, this.activeSubscription});
 
@@ -173,10 +193,12 @@ class ThemeCard extends StatelessWidget {
     var appState = context.watch<MyAppState>();
 
     void updateTheme() {      
+      // Do nothing if the selected theme is already applied
       if (appState.currentTheme != null && theme['color'] == appState.currentTheme['color']) {
         return;
       }
 
+      // Show an error message that lets user know subscription is needed to access a theme that requires subscription, when there is no active subscription.
       if(requiresSubscription && (activeSubscription == null || DateTime.fromMillisecondsSinceEpoch(activeSubscription).isBefore(DateTime.now()))) {
 
         ScaffoldMessenger.of(context).removeCurrentSnackBar();
@@ -189,12 +211,13 @@ class ThemeCard extends StatelessWidget {
             backgroundColor: Colors.black,
           ),
         );
-        // return;
       } else {
+        // Set new selected theme
         appState.setCurrentTheme(theme);
 
         ScaffoldMessenger.of(context).removeCurrentSnackBar();
 
+        // Show message to let a user know selected theme has been applied.
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Theme changed to ${theme['label']}.", style: Theme.of(context).textTheme.bodyMedium!.copyWith(
@@ -206,6 +229,7 @@ class ThemeCard extends StatelessWidget {
       }
     }
 
+    // Gesturedetector that allows user tap on a theme to select
     return GestureDetector(
       onTap: () {
         updateTheme();
