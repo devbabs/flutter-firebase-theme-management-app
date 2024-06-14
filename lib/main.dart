@@ -7,9 +7,12 @@ import 'package:firebase_theme_take_home_project/home.dart';
 import 'package:firebase_theme_take_home_project/theme_options.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: ".env");
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform
@@ -30,9 +33,6 @@ Future<void> main() async {
 
   remoteConfig.onConfigUpdated.listen((event) async {
     await remoteConfig.activate();
-
-    print("Remote config updated:");
-    print(remoteConfig.getAll());
   });
   
   var defaultThemes = json.decode(remoteConfig.getValue("default_themes").asString());
@@ -80,7 +80,6 @@ class MaterialHomeContainer extends StatelessWidget {
 
     if (appState.currentTheme != null) {
       currentTheme = appState.currentTheme;
-
     }
 
     return MaterialApp(
